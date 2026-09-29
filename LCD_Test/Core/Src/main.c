@@ -146,45 +146,25 @@ int main(void)
     if (MFRC522_Check(CardID) == MI_OK) {
         // Phat hien the! Chuan bi chuoi UID
         sprintf(szBuff, "ID: %02X%02X%02X%02X", CardID[0], CardID[1], CardID[2], CardID[3]);
+        
+        // Hien thi ma the len LCD
         lcd_clear();
         lcd_put_cur(0, 0);
+        lcd_send_string(" DA NHAN MA THE ");
+        lcd_put_cur(1, 2); 
+        lcd_send_string(szBuff); 
         
-        // So sanh xem co dung la the cua Bao khong (77 B5 3B 64)
-        if (CardID[0] == 0x77 && CardID[1] == 0xB5 && CardID[2] == 0x3B && CardID[3] == 0x64) {
-            lcd_send_string("  XIN CHAO BAO  ");
-            lcd_put_cur(1, 0); 
-            lcd_send_string("  Diem danh OK  ");
-            
-            // Ban du lieu qua UART cho Web Dev
-            char uartBuf[32];
-            sprintf(uartBuf, "AUTH_OK:77B53B64\n");
-            HAL_UART_Transmit(&huart1, (uint8_t*)uartBuf, strlen(uartBuf), 100);
-            
-            // Coi keu 1 tieng dai bao thanh cong
-            HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
-            HAL_Delay(500);
-            HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
-        } else {
-            lcd_send_string("THE LA! TU CHOI ");
-            lcd_put_cur(1, 2); 
-            lcd_send_string(szBuff); // In ra ma the la de biet ma gi
-            
-            // Ban du lieu the la qua UART cho Web Dev
-            char uartBuf[32];
-            sprintf(uartBuf, "AUTH_FAIL:%02X%02X%02X%02X\n", CardID[0], CardID[1], CardID[2], CardID[3]);
-            HAL_UART_Transmit(&huart1, (uint8_t*)uartBuf, strlen(uartBuf), 100);
-            
-            // Coi keu 3 tieng bip ngan canh bao
-            int i;
-            for(i = 0; i < 3; i++) {
-                HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
-                HAL_Delay(100);
-                HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
-                HAL_Delay(100);
-            }
-        }
+        // Chi ban dung ma the (UID) qua UART, de Web Dev tu kiem tra Database
+        char uartBuf[32];
+        sprintf(uartBuf, "UID:%02X%02X%02X%02X\n", CardID[0], CardID[1], CardID[2], CardID[3]);
+        HAL_UART_Transmit(&huart1, (uint8_t*)uartBuf, strlen(uartBuf), 100);
         
-        // Dung hinh 2 giay de xem ket qua roi moi xoa man hinh
+        // Coi keu 1 tieng ngan de bao hieu da doc the thanh cong
+        HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_SET);
+        HAL_Delay(200);
+        HAL_GPIO_WritePin(BUZZER_GPIO_Port, BUZZER_Pin, GPIO_PIN_RESET);
+        
+        // Dung hinh 2 giay roi moi xoa man hinh
         HAL_Delay(2000); 
         lcd_clear();
     } else {
